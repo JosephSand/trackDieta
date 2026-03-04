@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NutriTrack - Plan de Jose Manuel</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+        body { font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 pb-24">
+
+    <!-- Header -->
+    <header class="bg-emerald-600 text-white p-6 rounded-b-[2.5rem] shadow-lg sticky top-0 z-20">
+        <div class="max-w-md mx-auto">
+            <div class="flex justify-between items-center mb-4">
+                <div>
+                    <h1 class="text-2xl font-black tracking-tight">NUTRI<span class="text-emerald-200">TRACK</span></h1>
+                    <p class="text-emerald-100 text-xs font-medium uppercase tracking-widest opacity-80">Jose Manuel Sandoval</p>
+                </div>
+                <div id="header-trophy" class="bg-white/20 p-2 rounded-2xl backdrop-blur-md text-white/50 transition-colors">
+                    <i data-lucide="trophy"></i>
+                </div>
+            </div>
+
+            <!-- Selector de Día -->
+            <div id="day-selector" class="flex overflow-x-auto space-x-2 no-scrollbar py-2">
+                <!-- Days will be injected here -->
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-md mx-auto p-5 space-y-6">
+        
+        <!-- Vista Plan Diario -->
+        <section id="view-daily" class="space-y-6">
+            <!-- Card de Progreso -->
+            <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex items-center justify-between">
+                <div class="space-y-1">
+                    <h2 class="font-extrabold text-xl text-slate-800">Progreso</h2>
+                    <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">Metas de hoy</p>
+                </div>
+                <div class="relative w-20 h-20 flex items-center justify-center">
+                    <svg class="w-20 h-20">
+                        <circle cx="40" cy="40" r="34" stroke="#f1f5f9" stroke-width="8" fill="transparent" />
+                        <circle id="progress-circle" cx="40" cy="40" r="34" stroke="#10b981" stroke-width="8" fill="transparent" 
+                            stroke-dasharray="213.6" stroke-dashoffset="213.6" class="progress-ring__circle" stroke-linecap="round" />
+                    </svg>
+                    <span id="progress-text" class="absolute text-sm font-black text-slate-700">0%</span>
+                </div>
+            </div>
+
+            <!-- Lista de Comidas -->
+            <div id="meal-list" class="space-y-3">
+                <!-- Meals will be injected here -->
+            </div>
+
+            <!-- Tracker de Agua -->
+            <div class="bg-gradient-to-br from-blue-500 to-blue-600 p-6 rounded-[2.5rem] text-white shadow-lg relative overflow-hidden">
+                <div class="relative z-10">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="font-bold text-lg flex items-center gap-2">
+                            <i data-lucide="droplets" size="20"></i> Hidratación
+                        </h3>
+                        <span id="water-count" class="bg-white/20 px-3 py-1 rounded-full text-xs font-bold">0/10 vasos</span>
+                    </div>
+                    <div id="water-grid" class="grid grid-cols-5 gap-3">
+                        <!-- Water drops injected here -->
+                    </div>
+                </div>
+                <i data-lucide="droplets" class="absolute -right-6 -top-6 opacity-10 text-white w-32 h-32"></i>
+            </div>
+        </section>
+
+        <!-- Vista Compras -->
+        <section id="view-shopping" class="hidden space-y-6">
+            <div>
+                <h2 class="text-2xl font-black text-slate-800">Mi Carreta</h2>
+                <p class="text-slate-400 text-sm font-medium">Lista oficial de la Dieta Semanal</p>
+            </div>
+            <div id="shopping-categories" class="space-y-6">
+                <!-- Shopping list injected here -->
+            </div>
+        </section>
+
+        <!-- Vista Logros -->
+        <section id="view-stats" class="hidden space-y-6">
+            <div>
+                <h2 class="text-2xl font-black text-slate-800">Mis Logros</h2>
+                <p class="text-slate-400 text-sm font-medium">Colecciona medallas por tu disciplina</p>
+            </div>
+            <div id="achievements-list" class="grid grid-cols-1 gap-4">
+                <!-- Achievements injected here -->
+            </div>
+        </section>
+
+        <!-- Footer Info -->
+        <div class="pt-4 pb-8 flex flex-col items-center opacity-40">
+            <div class="h-px w-12 bg-slate-300 mb-4"></div>
+            <p class="text-[10px] font-bold text-slate-500">NUTRIÓLOGA LICDA. CARMEN POUBLANC</p>
+        </div>
+    </main>
+
+    <!-- Navigation -->
+    <nav class="fixed bottom-6 left-6 right-6 bg-slate-900/90 backdrop-blur-xl rounded-[2rem] px-8 py-4 flex justify-between items-center z-30 shadow-2xl border border-white/10">
+        <button onclick="switchView('daily')" id="nav-daily" class="flex flex-col items-center gap-1 text-emerald-400">
+            <i data-lucide="calendar" size="22"></i>
+            <span class="text-[9px] font-black uppercase tracking-tighter">Plan</span>
+        </button>
+        <button onclick="switchView('shopping')" id="nav-shopping" class="flex flex-col items-center gap-1 text-slate-500">
+            <i data-lucide="shopping-basket" size="22"></i>
+            <span class="text-[9px] font-black uppercase tracking-tighter">Súper</span>
+        </button>
+        <button onclick="switchView('stats')" id="nav-stats" class="flex flex-col items-center gap-1 text-slate-500">
+            <i data-lucide="trophy" size="22"></i>
+            <span class="text-[9px] font-black uppercase tracking-tighter">Logros</span>
+        </button>
+    </nav>
+
+    <script>
+        // --- DATA ---
+        const DIETA_DATA = {
+            "Lunes": [
+                { type: "Desayuno", desc: "2 rapiditas de jamón con queso, 1 yogurt de proteínas" },
+                { type: "Refrigerio", desc: "1 banano, 10 semillas de almendra" },
+                { type: "Almuerzo", desc: "1 pechuga asada, 2 tz de ensalada fresca, 1/2 tz de arroz" },
+                { type: "Refrigerio", desc: "1 yogurt de proteínas" },
+                { type: "Cena", desc: "1 tz de ejotes con tomate, 2 huevos picados, 1 reb. de pan integral" }
+            ],
+            "Martes": [
+                { type: "Desayuno", desc: "1 sandwich integral de jamón, queso, lechuga y tomate, 1 yogurt light" },
+                { type: "Refrigerio", desc: "4 uvas verdes, 1/2 tz de fresas" },
+                { type: "Almuerzo", desc: "10 oz de bistec encebollado, 1/2 tz de brócoli, 1/2 aguacate, 1/4 tz de puré de papas" },
+                { type: "Refrigerio", desc: "2 galletas de arroz" },
+                { type: "Cena", desc: "2 huevos estrellados con tomatada, 1/4 tz de frijoles, 1/3 de plátano salcochado" }
+            ],
+            "Miércoles": [
+                { type: "Desayuno", desc: "2 rapiditas de huevo con jamón, 1 yogurt light" },
+                { type: "Refrigerio", desc: "Zanahoria en palitos con limón y sal" },
+                { type: "Almuerzo", desc: "1 pechuga de pollo en fajitas, 2 oz de queso, 1/2 tz de arroz" },
+                { type: "Refrigerio", desc: "1 galleta maría" },
+                { type: "Cena", desc: "2 huevos en omelette con jamón de pavo, 1/4 tz de frijoles al gusto, 1 tortilla" }
+            ],
+            "Jueves": [
+                { type: "Desayuno", desc: "1 sandwich de crema de maní con jalea, 1 yogurt de proteínas" },
+                { type: "Refrigerio", desc: "1 banano, 10 semillas de almendra" },
+                { type: "Almuerzo", desc: "1 pechuga con brócoli, ejotes y zanahoria, 1/3 tz de guacamole, 1/3 tz de pasta corta" },
+                { type: "Refrigerio", desc: "2 galletas de arroz" },
+                { type: "Cena", desc: "2 huevos picados con hongos, 1/2 aguacate, 1/2 plátano salcochado" }
+            ],
+            "Viernes": [
+                { type: "Desayuno", desc: "2 pancakes banano con avena, 1/2 tz de frutas mixtas" },
+                { type: "Refrigerio", desc: "Zanahoria en palitos con limón y sal" },
+                { type: "Almuerzo", desc: "1 pechuga asada, 2 tz de ensalada fresca, 2 oz de queso, 1/3 tz de casamiento" },
+                { type: "Refrigerio", desc: "1 galleta maría" },
+                { type: "Cena", desc: "3 tacos caseros de su elección, 1 tz de chimol" }
+            ],
+            "Sábado": [
+                { type: "Desayuno", desc: "2 huevos estrellados con tomatada, 1/2 aguacate, 2 reb. de pan integral" },
+                { type: "Refrigerio", desc: "4 uvas verdes, 1/2 tz de fresas" },
+                { type: "Almuerzo", desc: "2 tortitas de res, 2 tz de ensalada fresca, 1 tortilla" },
+                { type: "Refrigerio", desc: "1 yogurt de proteínas" },
+                { type: "Cena", desc: "1 sandwich integral de pollo con queso mozzarella, lechuga y pepino" }
+            ],
+            "Domingo": [
+                { type: "Desayuno", desc: "2 huevos al gusto (queso, tomate, espinaca), 2 reb. pan integral, 1/3 tz frijoles" },
+                { type: "Refrigerio", desc: "1 yogurt de proteínas" },
+                { type: "Almuerzo", desc: "LIBRE (Disfruta con moderación)" },
+                { type: "Refrigerio", desc: "2 tz de gelatina" },
+                { type: "Cena", desc: "2 pupusas de su elección" }
+            ]
+        };
+
+        const SHOPPING_DATA = [
+            { category: "Proteínas y Lácteos", items: ["Huevos (1 docena)", "Pollo (3 pechugas)", "Res (10 oz bistec + carne molida)", "Jamón", "Yogurt (4 proteína + 2 light)", "Queso (fresco + mozzarella)", "Leche (1 litro)"] },
+            { category: "Frutas y Verduras", items: ["Bananos (3 uds)", "Fresas (1 taza)", "Uvas verdes", "Frutas mixtas", "Aguacates (2 uds)", "Lechuga, tomate, pepino y limones", "Brócoli, zanahorias, ejotes y papas"] },
+            { category: "Cereales y Despensa", items: ["Pan integral", "Rapiditas", "Tortillas de maíz", "Arroz y pasta corta", "Frijoles y avena", "Galletas arroz y María", "Gelatina", "Crema de maní y jalea", "Semillas de almendra (20 uds)"] }
+        ];
+
+        // --- STATE ---
+        let currentDay = "Lunes";
+        let completedMeals = {}; // format: "Day-Index": true
+        let waterGlasses = 0;
+        let purchasedItems = {};
+
+        // --- CORE FUNCTIONS ---
+        function init() {
+            renderDaySelector();
+            renderDailyView();
+            renderShoppingView();
+            renderWaterTracker();
+            renderAchievements();
+            lucide.createIcons();
+        }
+
+        function switchView(view) {
+            document.getElementById('view-daily').classList.add('hidden');
+            document.getElementById('view-shopping').classList.add('hidden');
+            document.getElementById('view-stats').classList.add('hidden');
+            
+            document.getElementById(`view-${view}`).classList.remove('hidden');
+            
+            // Update nav icons
+            ['daily', 'shopping', 'stats'].forEach(v => {
+                document.getElementById(`nav-${v}`).classList.remove('text-emerald-400');
+                document.getElementById(`nav-${v}`).classList.add('text-slate-500');
+            });
+            document.getElementById(`nav-${view}`).classList.add('text-emerald-400');
+            document.getElementById(`nav-${view}`).classList.remove('text-slate-500');
+        }
+
+        // --- RENDERERS ---
+        function renderDaySelector() {
+            const container = document.getElementById('day-selector');
+            const days = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+            container.innerHTML = days.map(day => `
+                <button onclick="setDay('${day}')" class="px-5 py-2 rounded-2xl text-sm font-bold transition-all whitespace-nowrap ${day === currentDay ? 'bg-white text-emerald-700 shadow-xl scale-105' : 'bg-emerald-500/40 text-emerald-50'}">
+                    ${day}
+                </button>
+            `).join('');
+        }
+
+        function setDay(day) {
+            currentDay = day;
+            renderDaySelector();
+            renderDailyView();
+        }
+
+        function renderDailyView() {
+            const container = document.getElementById('meal-list');
+            const meals = DIETA_DATA[currentDay];
+            
+            container.innerHTML = meals.map((meal, index) => {
+                const isDone = completedMeals[`${currentDay}-${index}`];
+                return `
+                    <div onclick="toggleMeal('${currentDay}', ${index})" class="p-5 rounded-3xl border transition-all duration-300 flex items-center gap-4 ${isDone ? 'bg-emerald-50/50 border-emerald-100' : 'bg-white border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)]'}">
+                        <div class="${isDone ? 'text-emerald-500 scale-110' : 'text-slate-200'}">
+                            <i data-lucide="${isDone ? 'check-circle-2' : 'circle'}" size="28"></i>
+                        </div>
+                        <div class="flex-1">
+                            <span class="text-[10px] font-black uppercase tracking-widest mb-1 block ${isDone ? 'text-emerald-400' : 'text-slate-400'}">${meal.type}</span>
+                            <p class="text-sm leading-tight ${isDone ? 'text-slate-400 line-through' : 'text-slate-800 font-semibold'}">${meal.desc}</p>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            updateProgress();
+            lucide.createIcons();
+        }
+
+        function toggleMeal(day, index) {
+            const key = `${day}-${index}`;
+            completedMeals[key] = !completedMeals[key];
+            renderDailyView();
+            renderAchievements();
+        }
+
+        function updateProgress() {
+            const meals = DIETA_DATA[currentDay];
+            const completedCount = meals.filter((_, i) => completedMeals[`${currentDay}-${i}`]).length;
+            const percentage = Math.round((completedCount / meals.length) * 100);
+            
+            const circle = document.getElementById('progress-circle');
+            const text = document.getElementById('progress-text');
+            const offset = 213.6 - (213.6 * percentage / 100);
+            circle.style.strokeDashoffset = offset;
+            text.innerText = `${percentage}%`;
+        }
+
+        function renderWaterTracker() {
+            const grid = document.getElementById('water-grid');
+            const countLabel = document.getElementById('water-count');
+            countLabel.innerText = `${waterGlasses}/10 vasos`;
+            
+            grid.innerHTML = Array.from({length: 10}).map((_, i) => `
+                <button onclick="setWater(${i + 1})" class="h-12 rounded-2xl flex items-center justify-center transition-all ${i < waterGlasses ? 'bg-white text-blue-600 scale-105 shadow-md' : 'bg-blue-400/30 text-blue-100 border border-blue-400/20'}">
+                    <i data-lucide="droplets" size="18" ${i < waterGlasses ? 'fill="currentColor"' : ''}></i>
+                </button>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function setWater(val) {
+            waterGlasses = val;
+            renderWaterTracker();
+            renderAchievements();
+        }
+
+        function renderShoppingView() {
+            const container = document.getElementById('shopping-categories');
+            container.innerHTML = SHOPPING_DATA.map(cat => `
+                <div class="space-y-3">
+                    <h4 class="text-xs font-black text-emerald-600 uppercase tracking-widest ml-2">${cat.category}</h4>
+                    <div class="bg-white rounded-[2rem] border border-slate-100 shadow-sm overflow-hidden">
+                        ${cat.items.map(item => `
+                            <div onclick="toggleShop('${item}')" class="p-4 flex items-center gap-3 border-b border-slate-50 last:border-0 cursor-pointer active:bg-slate-50 transition-colors">
+                                <i data-lucide="${purchasedItems[item] ? 'check-square' : 'square'}" size="20" class="${purchasedItems[item] ? 'text-emerald-500' : 'text-slate-200'}"></i>
+                                <span class="text-sm ${purchasedItems[item] ? 'text-slate-400 line-through' : 'text-slate-700 font-medium'}">${item}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        function toggleShop(item) {
+            purchasedItems[item] = !purchasedItems[item];
+            renderShoppingView();
+            renderAchievements();
+        }
+
+        function renderAchievements() {
+            const container = document.getElementById('achievements-list');
+            const mealsChecked = Object.values(completedMeals).filter(Boolean).length;
+            const shopChecked = Object.values(purchasedItems).filter(Boolean).length;
+            
+            const list = [
+                { id: 'start', title: 'Primer Paso', desc: 'Marca tu primera comida.', icon: 'chef-hat', unlocked: mealsChecked >= 1 },
+                { id: 'water', title: 'Hidratación Pro', desc: 'Bebe 8 vasos de agua.', icon: 'droplets', unlocked: waterGlasses >= 8 },
+                { id: 'shop', title: 'Despensa Lista', desc: 'Marca 5 productos del súper.', icon: 'shopping-basket', unlocked: shopChecked >= 5 },
+                { id: 'perfect', title: 'Día Perfecto', desc: 'Completa un día al 100%.', icon: 'star', unlocked: (DIETA_DATA[currentDay].filter((_, i) => completedMeals[`${currentDay}-${i}`]).length === DIETA_DATA[currentDay].length) }
+            ];
+
+            const trophyIcon = document.getElementById('header-trophy');
+            if (list.some(a => a.unlocked)) {
+                trophyIcon.classList.remove('text-white/50');
+                trophyIcon.classList.add('text-amber-300');
+            }
+
+            container.innerHTML = list.map(ach => `
+                <div class="p-5 rounded-[2rem] border flex items-center gap-5 transition-all ${ach.unlocked ? 'bg-white border-emerald-100 shadow-md' : 'bg-slate-100/50 border-transparent grayscale opacity-60'}">
+                    <div class="p-4 rounded-2xl ${ach.unlocked ? 'bg-emerald-500 text-white shadow-lg' : 'bg-slate-200 text-slate-400'}">
+                        <i data-lucide="${ach.unlocked ? ach.icon : 'lock'}" size="24"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="font-bold ${ach.unlocked ? 'text-slate-800' : 'text-slate-400'}">${ach.title}</h4>
+                        <p class="text-xs text-slate-400 font-medium">${ach.desc}</p>
+                    </div>
+                    ${ach.unlocked ? '<i data-lucide="star" class="text-amber-400 fill-amber-400" size="20"></i>' : ''}
+                </div>
+            `).join('');
+            lucide.createIcons();
+        }
+
+        // --- INIT ---
+        window.onload = init;
+    </script>
+</body>
+</html>
