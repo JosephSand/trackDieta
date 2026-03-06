@@ -16,6 +16,7 @@
             transform: rotate(-90deg);
             transform-origin: 50% 50%;
         }
+        .bar-transition { transition: height 0.5s ease-out; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-900 pb-24">
@@ -25,8 +26,8 @@
         <div class="max-w-md mx-auto">
             <div class="flex justify-between items-center mb-4">
                 <div>
-                    <h1 class="text-2xl font-black tracking-tight">NUTRI<span class="text-emerald-200">TRACK</span></h1>
-                    <p class="text-emerald-100 text-xs font-medium uppercase tracking-widest opacity-80">Jose Manuel Sandoval</p>
+                    <h1 class="text-2xl font-black tracking-tight uppercase">Nutri<span class="text-emerald-200">Track</span></h1>
+                    <p id="current-date-display" class="text-emerald-100 text-xs font-medium uppercase tracking-widest opacity-80">Cargando...</p>
                 </div>
                 <div id="header-trophy" class="bg-white/20 p-2 rounded-2xl backdrop-blur-md text-white/50 transition-colors">
                     <i data-lucide="trophy"></i>
@@ -48,7 +49,7 @@
             <div class="bg-white p-6 rounded-[2rem] shadow-sm border border-slate-100 flex items-center justify-between">
                 <div class="space-y-1">
                     <h2 class="font-extrabold text-xl text-slate-800">Progreso</h2>
-                    <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">Metas de hoy</p>
+                    <p class="text-slate-400 text-xs font-medium uppercase tracking-wider">Metas del día</p>
                 </div>
                 <div class="relative w-20 h-20 flex items-center justify-center">
                     <svg class="w-20 h-20">
@@ -77,6 +78,7 @@
                     <div id="water-grid" class="grid grid-cols-5 gap-3">
                         <!-- Water drops injected here -->
                     </div>
+                    <p class="text-blue-100 text-[10px] mt-4 font-bold uppercase tracking-wider opacity-80 text-center">Registro específico para este día</p>
                 </div>
                 <i data-lucide="droplets" class="absolute -right-6 -top-6 opacity-10 text-white w-32 h-32"></i>
             </div>
@@ -97,17 +99,26 @@
         <section id="view-stats" class="hidden space-y-6">
             <div>
                 <h2 class="text-2xl font-black text-slate-800">Mis Logros</h2>
-                <p class="text-slate-400 text-sm font-medium">Colecciona medallas por tu disciplina</p>
+                <p class="text-slate-400 text-sm font-medium">Disciplina y constancia</p>
             </div>
-            <div id="achievements-list" class="grid grid-cols-1 gap-4">
-                <!-- Achievements injected here -->
+
+            <!-- Gráfico de Agua -->
+            <div class="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm">
+                <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest mb-6">Historial de Agua (7 días)</h3>
+                <div id="water-history-chart" class="flex items-end justify-between h-32 gap-2 px-2">
+                    <!-- Bars injected here -->
+                </div>
+            </div>
+
+            <div id="achievements-container" class="space-y-8">
+                <!-- Achievements list injected here -->
             </div>
         </section>
 
         <!-- Footer Info -->
         <div class="pt-4 pb-8 flex flex-col items-center opacity-40">
             <div class="h-px w-12 bg-slate-300 mb-4"></div>
-            <p class="text-[10px] font-bold text-slate-500">NUTRIÓLOGA LICDA. CARMEN POUBLANC</p>
+            <p class="text-[10px] font-bold text-slate-500 uppercase">Licda. Carmen Poublanc • Jose Manuel Sandoval</p>
         </div>
     </main>
 
@@ -187,14 +198,56 @@
             { category: "Cereales y Despensa", items: ["Pan integral", "Rapiditas", "Tortillas de maíz", "Arroz y pasta corta", "Frijoles y avena", "Galletas arroz y María", "Gelatina", "Crema de maní y jalea", "Semillas de almendra (20 uds)"] }
         ];
 
-        // --- STATE ---
-        let currentDay = "Lunes";
-        let completedMeals = {}; // format: "Day-Index": true
-        let waterGlasses = 0;
-        let purchasedItems = {};
+        // --- CALENDAR LOGIC ---
+        // Asignamos cada día de la semana a una fecha real de la semana actual
+        const daysOfWeek = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
+        const dayMap = {}; // "Lunes" -> "2024-05-20"
+        
+        function setupDayMap() {
+            const now = new Date();
+            const dayNum = now.getDay() || 7; // 1 (Mon) - 7 (Sun)
+            const monday = new Date(now);
+            monday.setDate(now.getDate() - (dayNum - 1));
+            
+            daysOfWeek.forEach((name, i) => {
+                const d = new Date(monday);
+                d.setDate(monday.getDate() + i);
+                dayMap[name] = d.toISOString().split('T')[0];
+            });
+        }
+
+        // --- STATE & STORAGE ---
+        let currentDay = daysOfWeek[(new Date().getDay() || 7) - 1];
+        let completedMeals = JSON.parse(localStorage.getItem('nutri_meals')) || {};
+        let purchasedItems = JSON.parse(localStorage.getItem('nutri_shopping')) || {};
+        let waterLog = JSON.parse(localStorage.getItem('nutri_water_log')) || {}; // { "YYYY-MM-DD": count }
+
+        function saveState() {
+            localStorage.setItem('nutri_meals', JSON.stringify(completedMeals));
+            localStorage.setItem('nutri_shopping', JSON.stringify(purchasedItems));
+            localStorage.setItem('nutri_water_log', JSON.stringify(waterLog));
+        }
+
+        function checkResets() {
+            const week = Math.ceil(new Date().getDate() / 7);
+            const lastWeek = localStorage.getItem('nutri_last_week');
+            const dayOfWeek = new Date().getDay();
+
+            if (dayOfWeek === 1 && lastWeek != week) {
+                completedMeals = {};
+                purchasedItems = {};
+                localStorage.setItem('nutri_last_week', week);
+                saveState();
+            }
+        }
 
         // --- CORE FUNCTIONS ---
         function init() {
+            setupDayMap();
+            checkResets();
+            
+            document.getElementById('current-date-display').innerText = `Semana del ${dayMap["Lunes"]} al ${dayMap["Domingo"]}`;
+            
             renderDaySelector();
             renderDailyView();
             renderShoppingView();
@@ -207,23 +260,23 @@
             document.getElementById('view-daily').classList.add('hidden');
             document.getElementById('view-shopping').classList.add('hidden');
             document.getElementById('view-stats').classList.add('hidden');
-            
             document.getElementById(`view-${view}`).classList.remove('hidden');
             
-            // Update nav icons
             ['daily', 'shopping', 'stats'].forEach(v => {
-                document.getElementById(`nav-${v}`).classList.remove('text-emerald-400');
-                document.getElementById(`nav-${v}`).classList.add('text-slate-500');
+                const btn = document.getElementById(`nav-${v}`);
+                btn.classList.remove('text-emerald-400');
+                btn.classList.add('text-slate-500');
             });
             document.getElementById(`nav-${view}`).classList.add('text-emerald-400');
             document.getElementById(`nav-${view}`).classList.remove('text-slate-500');
+
+            if(view === 'stats') renderWaterHistory();
         }
 
         // --- RENDERERS ---
         function renderDaySelector() {
             const container = document.getElementById('day-selector');
-            const days = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
-            container.innerHTML = days.map(day => `
+            container.innerHTML = daysOfWeek.map(day => `
                 <button onclick="setDay('${day}')" class="px-5 py-2 rounded-2xl text-sm font-bold transition-all whitespace-nowrap ${day === currentDay ? 'bg-white text-emerald-700 shadow-xl scale-105' : 'bg-emerald-500/40 text-emerald-50'}">
                     ${day}
                 </button>
@@ -234,16 +287,19 @@
             currentDay = day;
             renderDaySelector();
             renderDailyView();
+            renderWaterTracker();
         }
 
         function renderDailyView() {
             const container = document.getElementById('meal-list');
+            const dateStr = dayMap[currentDay];
             const meals = DIETA_DATA[currentDay];
             
             container.innerHTML = meals.map((meal, index) => {
-                const isDone = completedMeals[`${currentDay}-${index}`];
+                const key = `${dateStr}-${index}`;
+                const isDone = completedMeals[key];
                 return `
-                    <div onclick="toggleMeal('${currentDay}', ${index})" class="p-5 rounded-3xl border transition-all duration-300 flex items-center gap-4 ${isDone ? 'bg-emerald-50/50 border-emerald-100' : 'bg-white border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)]'}">
+                    <div onclick="toggleMeal(${index})" class="p-5 rounded-3xl border transition-all duration-300 flex items-center gap-4 ${isDone ? 'bg-emerald-50/50 border-emerald-100' : 'bg-white border-slate-100 shadow-[0_4px_20px_rgba(0,0,0,0.03)]'}">
                         <div class="${isDone ? 'text-emerald-500 scale-110' : 'text-slate-200'}">
                             <i data-lucide="${isDone ? 'check-circle-2' : 'circle'}" size="28"></i>
                         </div>
@@ -259,16 +315,19 @@
             lucide.createIcons();
         }
 
-        function toggleMeal(day, index) {
-            const key = `${day}-${index}`;
+        function toggleMeal(index) {
+            const dateStr = dayMap[currentDay];
+            const key = `${dateStr}-${index}`;
             completedMeals[key] = !completedMeals[key];
+            saveState();
             renderDailyView();
             renderAchievements();
         }
 
         function updateProgress() {
+            const dateStr = dayMap[currentDay];
             const meals = DIETA_DATA[currentDay];
-            const completedCount = meals.filter((_, i) => completedMeals[`${currentDay}-${i}`]).length;
+            const completedCount = meals.filter((_, i) => completedMeals[`${dateStr}-${i}`]).length;
             const percentage = Math.round((completedCount / meals.length) * 100);
             
             const circle = document.getElementById('progress-circle');
@@ -281,20 +340,49 @@
         function renderWaterTracker() {
             const grid = document.getElementById('water-grid');
             const countLabel = document.getElementById('water-count');
-            countLabel.innerText = `${waterGlasses}/10 vasos`;
+            const dateStr = dayMap[currentDay];
+            const currentWater = waterLog[dateStr] || 0;
             
+            countLabel.innerText = `${currentWater}/10 vasos`;
             grid.innerHTML = Array.from({length: 10}).map((_, i) => `
-                <button onclick="setWater(${i + 1})" class="h-12 rounded-2xl flex items-center justify-center transition-all ${i < waterGlasses ? 'bg-white text-blue-600 scale-105 shadow-md' : 'bg-blue-400/30 text-blue-100 border border-blue-400/20'}">
-                    <i data-lucide="droplets" size="18" ${i < waterGlasses ? 'fill="currentColor"' : ''}></i>
+                <button onclick="setWater(${i + 1})" class="h-12 rounded-2xl flex items-center justify-center transition-all ${i < currentWater ? 'bg-white text-blue-600 scale-105 shadow-md' : 'bg-blue-400/30 text-blue-100 border border-blue-400/20'}">
+                    <i data-lucide="droplets" size="18" ${i < currentWater ? 'fill="currentColor"' : ''}></i>
                 </button>
             `).join('');
             lucide.createIcons();
         }
 
         function setWater(val) {
-            waterGlasses = val;
+            const dateStr = dayMap[currentDay];
+            waterLog[dateStr] = val;
+            saveState();
             renderWaterTracker();
             renderAchievements();
+        }
+
+        function renderWaterHistory() {
+            const container = document.getElementById('water-history-chart');
+            const today = new Date();
+            let barsHtml = "";
+            
+            for(let i = 6; i >= 0; i--) {
+                const d = new Date();
+                d.setDate(today.getDate() - i);
+                const ds = d.toISOString().split('T')[0];
+                const count = waterLog[ds] || 0;
+                const h = (count / 10) * 100;
+                const label = i === 0 ? 'Hoy' : d.getDate();
+                
+                barsHtml += `
+                    <div class="flex flex-col items-center flex-1 gap-2">
+                        <div class="relative w-full bg-slate-100 rounded-full h-24 overflow-hidden">
+                            <div class="absolute bottom-0 left-0 right-0 bg-blue-500 bar-transition rounded-full" style="height: ${h}%"></div>
+                        </div>
+                        <span class="text-[10px] font-bold text-slate-400">${label}</span>
+                    </div>
+                `;
+            }
+            container.innerHTML = barsHtml;
         }
 
         function renderShoppingView() {
@@ -317,29 +405,52 @@
 
         function toggleShop(item) {
             purchasedItems[item] = !purchasedItems[item];
+            saveState();
             renderShoppingView();
             renderAchievements();
         }
 
         function renderAchievements() {
-            const container = document.getElementById('achievements-list');
-            const mealsChecked = Object.values(completedMeals).filter(Boolean).length;
+            const container = document.getElementById('achievements-container');
+            const dateStr = dayMap[currentDay];
+            const waterToday = waterLog[dateStr] || 0;
+            
+            const mealsToday = DIETA_DATA[currentDay].filter((_, i) => completedMeals[`${dateStr}-${i}`]).length;
+            const mealsCheckedTotal = Object.values(completedMeals).filter(Boolean).length;
             const shopChecked = Object.values(purchasedItems).filter(Boolean).length;
             
-            const list = [
-                { id: 'start', title: 'Primer Paso', desc: 'Marca tu primera comida.', icon: 'chef-hat', unlocked: mealsChecked >= 1 },
-                { id: 'water', title: 'Hidratación Pro', desc: 'Bebe 8 vasos de agua.', icon: 'droplets', unlocked: waterGlasses >= 8 },
-                { id: 'shop', title: 'Despensa Lista', desc: 'Marca 5 productos del súper.', icon: 'shopping-basket', unlocked: shopChecked >= 5 },
-                { id: 'perfect', title: 'Día Perfecto', desc: 'Completa un día al 100%.', icon: 'star', unlocked: (DIETA_DATA[currentDay].filter((_, i) => completedMeals[`${currentDay}-${i}`]).length === DIETA_DATA[currentDay].length) }
+            const daily = [
+                { title: 'Iniciado', desc: 'Primera comida del día lista.', icon: 'chef-hat', unlocked: mealsToday >= 1 },
+                { title: 'Bien Hidratado', desc: '8+ vasos de agua hoy.', icon: 'droplets', unlocked: waterToday >= 8 },
+                { title: 'Meta Diaria', desc: 'Completaste todo el menú.', icon: 'star', unlocked: mealsToday === DIETA_DATA[currentDay].length }
+            ];
+
+            const weekly = [
+                { title: 'Súper Organizado', desc: '10+ artículos comprados.', icon: 'shopping-basket', unlocked: shopChecked >= 10 },
+                { title: 'Constancia', desc: '15+ comidas registradas.', icon: 'calendar-check', unlocked: mealsCheckedTotal >= 15 }
             ];
 
             const trophyIcon = document.getElementById('header-trophy');
-            if (list.some(a => a.unlocked)) {
+            if ([...daily, ...weekly].some(a => a.unlocked)) {
                 trophyIcon.classList.remove('text-white/50');
                 trophyIcon.classList.add('text-amber-300');
             }
 
-            container.innerHTML = list.map(ach => `
+            container.innerHTML = `
+                <div class="space-y-4">
+                    <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest ml-2">Retos de Hoy</h3>
+                    ${daily.map(ach => renderAchCard(ach)).join('')}
+                </div>
+                <div class="space-y-4">
+                    <h3 class="text-xs font-black text-slate-400 uppercase tracking-widest ml-2">Retos Semanales</h3>
+                    ${weekly.map(ach => renderAchCard(ach)).join('')}
+                </div>
+            `;
+            lucide.createIcons();
+        }
+
+        function renderAchCard(ach) {
+            return `
                 <div class="p-5 rounded-[2rem] border flex items-center gap-5 transition-all ${ach.unlocked ? 'bg-white border-emerald-100 shadow-md' : 'bg-slate-100/50 border-transparent grayscale opacity-60'}">
                     <div class="p-4 rounded-2xl ${ach.unlocked ? 'bg-emerald-500 text-white shadow-lg' : 'bg-slate-200 text-slate-400'}">
                         <i data-lucide="${ach.unlocked ? ach.icon : 'lock'}" size="24"></i>
@@ -350,11 +461,9 @@
                     </div>
                     ${ach.unlocked ? '<i data-lucide="star" class="text-amber-400 fill-amber-400" size="20"></i>' : ''}
                 </div>
-            `).join('');
-            lucide.createIcons();
+            `;
         }
 
-        // --- INIT ---
         window.onload = init;
     </script>
 </body>
